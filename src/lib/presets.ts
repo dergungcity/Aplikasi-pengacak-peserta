@@ -10,6 +10,15 @@ export function getRandomColor(): string {
   return AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 }
 
+export function generateShareCode(): string {
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let code = 'TRN-';
+  for (let i = 0; i < 4; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export function createDefaultTournament(userId: string): Tournament {
   const participants: Participant[] = [
     { id: 'p1', number: '01', name: 'Ahmad Faiz', organization: 'SMK Merdeka 1', avatarColor: '#3b82f6', notes: 'Peserta pertama' },
@@ -45,6 +54,7 @@ export function createDefaultTournament(userId: string): Tournament {
     currentRoundId: round1Id,
     participants,
     performedRecords: [],
+    shareCode: generateShareCode(),
     createdAt: now,
     updatedAt: now
   };

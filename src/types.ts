@@ -95,6 +95,9 @@ export interface Tournament {
   bracketType?: BracketType;
   participantsPerSession?: number; // e.g. 2 (1v1), 3, 4 (Kuartet), 5, 6, 8 (Sesi Panggung/Heat)
   qualifiersPerSession?: number; // e.g. 1 or 2 per heat/group
+  shareCode?: string; // 6-digit sync code for cross-device access (e.g. TRN-8291)
+  panitiaName?: string; // Name of panitia for easy search across devices
+  creatorEmail?: string;
   createdAt: string;
   updatedAt: string;
 }

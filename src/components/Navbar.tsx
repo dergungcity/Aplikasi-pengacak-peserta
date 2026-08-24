@@ -13,7 +13,9 @@ import {
   Volume2,
   VolumeX,
   GitBranch,
-  Edit3
+  Edit3,
+  Smartphone,
+  Share2
 } from 'lucide-react';
 import { Tournament, UserAuth } from '../types';
 
@@ -28,6 +30,7 @@ interface NavbarProps {
   onOpenTournamentList: () => void;
   onOpenParticipantManager: () => void;
   onOpenEditTournament?: () => void;
+  onOpenCrossDeviceSync?: () => void;
   onTogglePresentation: () => void;
   isPresentationMode: boolean;
   soundEnabled: boolean;
@@ -46,6 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenTournamentList,
   onOpenParticipantManager,
   onOpenEditTournament,
+  onOpenCrossDeviceSync,
   onTogglePresentation,
   isPresentationMode,
   soundEnabled,
@@ -182,6 +186,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
+          {/* Cross-device Sync / Buka di HP & Laptop */}
+          {onOpenCrossDeviceSync && (
+            <button
+              id="btn-open-cross-device-sync"
+              type="button"
+              onClick={onOpenCrossDeviceSync}
+              className="flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50/80 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 transition-all cursor-pointer shadow-xs"
+              title="Lanjutkan di HP atau Laptop Lain (Scan QR / Kode Lomba)"
+            >
+              <Smartphone className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <span className="hidden sm:inline">Sync HP / Laptop</span>
+            </button>
+          )}
+
           {/* Tournament List / Switch */}
           <button
             id="btn-open-tournament-list"
@@ -190,7 +208,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Kelola & Buka Turnamen Lain"
           >
             <FolderOpen className="h-3.5 w-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Sesi</span>
+            <span className="hidden sm:inline">Daftar Lomba</span>
           </button>
 
           {/* Create New Tournament */}

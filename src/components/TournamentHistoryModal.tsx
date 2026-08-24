@@ -12,7 +12,10 @@ import {
   Tag, 
   Check, 
   FolderOpen,
-  ArrowRight
+  ArrowRight,
+  Smartphone,
+  Share2,
+  DownloadCloud
 } from 'lucide-react';
 import { Tournament } from '../types';
 
@@ -25,6 +28,7 @@ interface TournamentHistoryModalProps {
   onDeleteTournament: (id: string) => void;
   onOpenCreateNew: () => void;
   onEditTournament: (tournament: Tournament) => void;
+  onOpenCrossDeviceSync?: () => void;
 }
 
 export const TournamentHistoryModal: React.FC<TournamentHistoryModalProps> = ({
@@ -35,7 +39,8 @@ export const TournamentHistoryModal: React.FC<TournamentHistoryModalProps> = ({
   onSelectTournament,
   onDeleteTournament,
   onOpenCreateNew,
-  onEditTournament
+  onEditTournament,
+  onOpenCrossDeviceSync
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -45,7 +50,8 @@ export const TournamentHistoryModal: React.FC<TournamentHistoryModalProps> = ({
   const filteredTournaments = tournaments.filter(t => 
     t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    t.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.shareCode?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -61,14 +67,14 @@ export const TournamentHistoryModal: React.FC<TournamentHistoryModalProps> = ({
         </button>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 shadow-xs border border-indigo-100 dark:border-indigo-900">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 shadow-xs border border-indigo-100 dark:border-indigo-900 shrink-0">
               <Trophy className="h-5 w-5" />
             </div>
             <div>
               <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block">
-                Database & Riwayat Lomba
+                Database & Riwayat Lomba Cloud
               </span>
               <h2 className="text-lg font-black text-slate-950 dark:text-white">
                 Daftar Turnamen & Sesi Tersimpan
@@ -78,6 +84,20 @@ export const TournamentHistoryModal: React.FC<TournamentHistoryModalProps> = ({
               </p>
             </div>
           </div>
+
+          {onOpenCrossDeviceSync && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenCrossDeviceSync();
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 transition-colors shrink-0 cursor-pointer"
+            >
+              <Smartphone className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              <span>Buka dari HP/Laptop Lain</span>
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -87,7 +107,7 @@ export const TournamentHistoryModal: React.FC<TournamentHistoryModalProps> = ({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Cari nama turnamen, sesi, atau kategori lomba..."
+            placeholder="Cari nama turnamen, kode lomba, atau kategori..."
             className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2 pl-10 pr-3.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           />
         </div>
@@ -95,8 +115,21 @@ export const TournamentHistoryModal: React.FC<TournamentHistoryModalProps> = ({
         {/* List of saved tournaments */}
         <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
           {filteredTournaments.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-400">
-              {tournaments.length === 0 ? 'Belum ada turnamen yang tersimpan.' : 'Tidak ada turnamen yang cocok dengan pencarian.'}
+            <div className="py-10 text-center text-xs text-slate-400 space-y-2">
+              <p>{tournaments.length === 0 ? 'Belum ada turnamen yang tersimpan di perangkat ini.' : 'Tidak ada turnamen yang cocok dengan pencarian.'}</p>
+              {onOpenCrossDeviceSync && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenCrossDeviceSync();
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700 transition-colors"
+                >
+                  <DownloadCloud className="h-3.5 w-3.5" />
+                  <span>Buka Lomba dari Kode / Cloud</span>
+                </button>
+              )}
             </div>
           ) : (
             filteredTournaments.map((t) => {
@@ -125,6 +158,11 @@ export const TournamentHistoryModal: React.FC<TournamentHistoryModalProps> = ({
                       {isCurrent && (
                         <span className="rounded-md bg-indigo-600 px-2 py-0.5 text-[10px] font-mono font-black uppercase tracking-wider text-white">
                           Sedang Aktif
+                        </span>
+                      )}
+                      {t.shareCode && (
+                        <span className="rounded-md bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 font-mono px-1.5 py-0.5 text-[10px] font-bold">
+                          {t.shareCode}
                         </span>
                       )}
                       <span className="rounded-md bg-slate-200/80 dark:bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:text-slate-300">
@@ -215,14 +253,26 @@ export const TournamentHistoryModal: React.FC<TournamentHistoryModalProps> = ({
         </div>
 
         {/* Action Footer */}
-        <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
-          <button
-            onClick={() => { onOpenCreateNew(); onClose(); }}
-            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-indigo-700 shadow-md shadow-indigo-600/20 cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Buat Lomba / Turnamen Baru</span>
-          </button>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { onOpenCreateNew(); onClose(); }}
+              className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-black uppercase tracking-wider text-white hover:bg-indigo-700 shadow-md shadow-indigo-600/20 cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Buat Lomba Baru</span>
+            </button>
+
+            {onOpenCrossDeviceSync && (
+              <button
+                onClick={() => { onClose(); onOpenCrossDeviceSync(); }}
+                className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white dark:bg-slate-800 dark:border-slate-700 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 cursor-pointer"
+              >
+                <Smartphone className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Buka via Kode / HP</span>
+              </button>
+            )}
+          </div>
           
           <button
             onClick={onClose}
@@ -236,3 +286,4 @@ export const TournamentHistoryModal: React.FC<TournamentHistoryModalProps> = ({
     </div>
   );
 };
+

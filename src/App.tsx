@@ -7,7 +7,11 @@ import {
   saveTournamentToFirestore, 
   deleteTournamentFromFirestore, 
   subscribeToUserTournaments,
-  loginAsGuest
+  loginAsGuest,
+  fetchTournamentByCode,
+  fetchTournamentById,
+  addAccessedTournamentId,
+  getAccessedTournamentIds
 } from './lib/firebase';
 import { createDefaultTournament } from './lib/presets';
 import { Tournament, TournamentRound, Participant, PerformedRecord, UserAuth } from './types';
@@ -24,9 +28,11 @@ import { ParticipantManagerModal } from './components/ParticipantManagerModal';
 import { AdvanceRoundModal } from './components/AdvanceRoundModal';
 import { TournamentHistoryModal } from './components/TournamentHistoryModal';
 import { EditTournamentModal } from './components/EditTournamentModal';
+import { CrossDeviceSyncModal } from './components/CrossDeviceSyncModal';
 import { AuthModal } from './components/AuthModal';
 import { RoundWinnerModal } from './components/RoundWinnerModal';
 import { RoundWinner } from './types';
+import { CheckCircle2, Smartphone, Sparkles, X } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'pengacak_lomba_active_tourn';
 
@@ -39,6 +45,7 @@ export default function App() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [currentTournamentId, setCurrentTournamentId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [toastNotification, setToastNotification] = useState<{ message: string; type: 'info' | 'success' } | null>(null);
 
   // UI State
   const [activeTab, setActiveTab] = useState<'draw' | 'bracket' | 'leaderboard' | 'participants'>('draw');
@@ -56,6 +63,7 @@ export default function App() {
   const [isAdvanceRoundModalOpen, setIsAdvanceRoundModalOpen] = useState(false);
   const [isTournamentListModalOpen, setIsTournamentListModalOpen] = useState(false);
   const [isEditTournamentModalOpen, setIsEditTournamentModalOpen] = useState(false);
+  const [isCrossDeviceSyncOpen, setIsCrossDeviceSyncOpen] = useState(false);
   const [tournamentToEdit, setTournamentToEdit] = useState<Tournament | null>(null);
   const [selectedWinnerModalRound, setSelectedWinnerModalRound] = useState<TournamentRound | null>(null);
   const [scoreModalParticipant, setScoreModalParticipant] = useState<Participant | null>(null);
@@ -64,6 +72,35 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('pengacak_sound_fx', soundEnabled ? 'true' : 'false');
   }, [soundEnabled]);
+
+  // Deep Link Check: Automatically load tournament if ?code= or ?t= is in URL (cross-device handover)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code') || params.get('t');
+    if (code) {
+      (async () => {
+        try {
+          setIsSyncing(true);
+          const loaded = await fetchTournamentByCode(code);
+          if (loaded) {
+            setTournaments(prev => [loaded, ...prev.filter(t => t.id !== loaded.id)]);
+            setCurrentTournamentId(loaded.id);
+            addAccessedTournamentId(loaded.id);
+            setToastNotification({
+              message: `Berhasil membuka lomba "${loaded.name}" dari perangkat lain!`,
+              type: 'success'
+            });
+            setTimeout(() => setToastNotification(null), 5500);
+          }
+        } catch (err) {
+          console.warn('Error loading tournament from URL:', err);
+        } finally {
+          setIsSyncing(false);
+        }
+      })();
+    }
+  }, []);
 
   // Firebase Auth listener
   useEffect(() => {
@@ -86,11 +123,11 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Subscribe to user tournaments in Firestore
+  // Subscribe to user tournaments in Firestore (synced across devices & accessed tournaments)
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = subscribeToUserTournaments(user.uid, (remoteTournaments) => {
+    const unsubscribe = subscribeToUserTournaments(user.uid, user.displayName, (remoteTournaments) => {
       if (remoteTournaments && remoteTournaments.length > 0) {
         setTournaments(remoteTournaments);
         if (!currentTournamentId || !remoteTournaments.some(t => t.id === currentTournamentId)) {
@@ -372,6 +409,29 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col antialiased dark:bg-slate-950 dark:text-slate-100">
       
+      {/* Toast Notification for Cross-Device Sync and Updates */}
+      {toastNotification && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-indigo-200 bg-white/95 p-4 shadow-2xl backdrop-blur-md dark:border-indigo-800 dark:bg-slate-900/95 animate-in slide-in-from-bottom-5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-white shrink-0 shadow-xs">
+            <CheckCircle2 className="h-5 w-5" />
+          </div>
+          <div className="pr-2">
+            <p className="text-xs font-black text-slate-900 dark:text-white">
+              Sinkronisasi Berhasil
+            </p>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              {toastNotification.message}
+            </p>
+          </div>
+          <button
+            onClick={() => setToastNotification(null)}
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Navbar Header */}
       <Navbar
         currentTournament={currentTournament}
@@ -386,6 +446,7 @@ export default function App() {
         }}
         onOpenTournamentList={() => setIsTournamentListModalOpen(true)}
         onOpenParticipantManager={() => setIsParticipantManagerOpen(true)}
+        onOpenCrossDeviceSync={() => setIsCrossDeviceSyncOpen(true)}
         onOpenEditTournament={() => {
           if (currentTournament) {
             setTournamentToEdit(currentTournament);
@@ -546,6 +607,25 @@ export default function App() {
         onEditTournament={(t) => {
           setTournamentToEdit(t);
           setIsEditTournamentModalOpen(true);
+        }}
+        onOpenCrossDeviceSync={() => setIsCrossDeviceSyncOpen(true)}
+      />
+
+      {/* Cross Device Handover / Sync Modal (QR Code, Share Code, Cloud Search) */}
+      <CrossDeviceSyncModal
+        isOpen={isCrossDeviceSyncOpen}
+        onClose={() => setIsCrossDeviceSyncOpen(false)}
+        currentTournament={currentTournament}
+        currentPanitiaName={user?.displayName}
+        onSelectTournament={(loaded) => {
+          setTournaments(prev => [loaded, ...prev.filter(t => t.id !== loaded.id)]);
+          setCurrentTournamentId(loaded.id);
+          addAccessedTournamentId(loaded.id);
+          setToastNotification({
+            message: `Turnamen "${loaded.name}" berhasil dibuka & disinkronkan ke perangkat ini!`,
+            type: 'success'
+          });
+          setTimeout(() => setToastNotification(null), 5000);
         }}
       />
 
