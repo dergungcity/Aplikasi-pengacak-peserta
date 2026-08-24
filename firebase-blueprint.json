@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "Tournament": {
+      "title": "Tournament",
+      "description": "Lomba atau turnamen data",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "scoringCriteria": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "currentRoundIndex": { "type": "number" },
+        "rounds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "roundNumber": { "type": "number" },
+              "status": { "type": "string" },
+              "qualifiersCount": { "type": "number" }
+            }
+          }
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "number": { "type": "string" },
+              "name": { "type": "string" },
+              "organization": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          }
+        },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "name", "createdAt"]
+    },
+    "RoundResult": {
+      "title": "RoundResult",
+      "description": "Hasil dan skor per babak untuk peserta",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tournamentId": { "type": "string" },
+        "roundId": { "type": "string" },
+        "participantId": { "type": "string" },
+        "scores": { "type": "object" },
+        "totalScore": { "type": "number" },
+        "drawnAt": { "type": "string" },
+        "hasPerformed": { "type": "boolean" },
+        "isQualified": { "type": "boolean" },
+        "rank": { "type": "number" },
+        "notes": { "type": "string" }
+      },
+      "required": ["tournamentId", "roundId", "participantId"]
+    }
+  },
+  "firestore": {
+    "/tournaments/{tournamentId}": {
+      "entity": "Tournament"
+    },
+    "/tournaments/{tournamentId}/roundResults/{resultId}": {
+      "entity": "RoundResult"
+    }
+  }
+}

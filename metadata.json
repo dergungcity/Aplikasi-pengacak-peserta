@@ -1,0 +1,6 @@
+{
+  "name": "Pengacak Peserta Lomba & Manajemen Skor",
+  "description": "Aplikasi pengacak nomor/peserta lomba, eliminasi peserta tampil otomatis, bagan pertandingan turnamen interaktif, sistem babak bertingkat, dan manajemen skor penjurian.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
